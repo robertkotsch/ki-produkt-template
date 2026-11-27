@@ -151,3 +151,87 @@ test('R5 Index nennt fehlende Seite', async () => {
   assert.equal(b.length, 1);
   assert.equal(b[0].datei, 'wiki/index.md');
 });
+
+// ---------- R6, H1, H2 ----------
+
+const uebergabe = (felder, rumpf = '# Übergabe\n') => seite(felder, rumpf);
+
+test('R6 abgeschlossen ohne abgeschlossen_von und _am', async () => {
+  const root = erzeugeProjekt({
+    'wiki/index.md': '',
+    'stufen/1-ziel/uebergabe.md': uebergabe({ status: 'abgeschlossen' }),
+  });
+  assert.equal(nur(await lint(root), 'R6-uebergabe').length, 2);
+});
+
+test('R6 abgeschlossen verweist auf vorgeschlagene Wiki-Seite', async () => {
+  const root = erzeugeProjekt({
+    'wiki/index.md': '[a](a.md)\n',
+    'wiki/a.md': seite({ status: 'vorgeschlagen' }),
+    'stufen/1-ziel/uebergabe.md': uebergabe(
+      { status: 'abgeschlossen', abgeschlossen_von: 'Erika Muster', abgeschlossen_am: '27.11.2026' },
+      'Beleg: [Anwendungsfall](../../wiki/a.md)\n',
+    ),
+  });
+  const b = nur(await lint(root), 'R6-uebergabe');
+  assert.equal(b.length, 1);
+  assert.match(b[0].grund, /wiki\/a\.md/);
+});
+
+test('R6 abgeschlossen verweist auf bestätigte Seite', async () => {
+  const root = erzeugeProjekt({
+    'wiki/index.md': '[a](a.md)\n',
+    'wiki/a.md': seite({ status: 'bestätigt', 'bestätigt_von': 'E', 'bestätigt_am': '27.11.2026' }),
+    'stufen/1-ziel/uebergabe.md': uebergabe(
+      { status: 'abgeschlossen', abgeschlossen_von: 'Erika Muster', abgeschlossen_am: '27.11.2026' },
+      'Beleg: [Anwendungsfall](../../wiki/a.md)\n',
+    ),
+  });
+  assert.deepEqual(nur(await lint(root), 'R6-uebergabe'), []);
+});
+
+test('R6 vorbereitet verweist auf vorgeschlagene Seite', async () => {
+  const root = erzeugeProjekt({
+    'wiki/index.md': '[a](a.md)\n',
+    'wiki/a.md': seite({ status: 'vorgeschlagen' }),
+    'stufen/1-ziel/uebergabe.md': uebergabe({ status: 'vorbereitet' }, '[a](../../wiki/a.md)\n'),
+  });
+  assert.deepEqual(nur(await lint(root), 'R6-uebergabe'), []);
+});
+
+test('R6 unbekannter Übergabestatus', async () => {
+  const root = erzeugeProjekt({ 'wiki/index.md': '', 'stufen/1-ziel/uebergabe.md': uebergabe({ status: 'fertig' }) });
+  assert.equal(nur(await lint(root), 'R6-uebergabe').length, 1);
+});
+
+test('H1 Seite mit Änderungsvorschlägen', async () => {
+  const root = erzeugeProjekt({
+    'wiki/index.md': '[a](a.md)\n',
+    'wiki/a.md': seite({ status: 'vorgeschlagen' }, '# A\n\n## Änderungsvorschläge\n\nNeu.\n'),
+  });
+  const b = nur(await lint(root), 'H1-aenderungsvorschlag');
+  assert.equal(b.length, 1);
+  assert.equal(b[0].stufe, 'HINWEIS');
+});
+
+test('H2 Stufe 3 begonnen, Übergabe 2 nicht abgeschlossen', async () => {
+  const root = erzeugeProjekt({
+    'wiki/index.md': '',
+    'stufen/DURCHLAUF.md': seite({ durchlauf: '1', anlass: 'Erstentwicklung', einstiegsstufe: '1' }),
+    'stufen/2-prozess/uebergabe.md': uebergabe({ status: 'vorbereitet' }),
+    'stufen/3-daten/eingang.md': seite({ status: 'begonnen' }),
+  });
+  const b = nur(await lint(root), 'H2-vorstufe');
+  assert.equal(b.length, 1);
+  assert.equal(b[0].datei, 'stufen/3-daten/eingang.md');
+});
+
+test('H2 nicht bei Einstiegsstufe des Durchlaufs', async () => {
+  const root = erzeugeProjekt({
+    'wiki/index.md': '',
+    'stufen/DURCHLAUF.md': seite({ durchlauf: '2', anlass: 'neue Datenquelle', einstiegsstufe: '3' }),
+    'stufen/2-prozess/uebergabe.md': uebergabe({ status: 'offen' }),
+    'stufen/3-daten/eingang.md': seite({ status: 'begonnen' }),
+  });
+  assert.deepEqual(nur(await lint(root), 'H2-vorstufe'), []);
+});
