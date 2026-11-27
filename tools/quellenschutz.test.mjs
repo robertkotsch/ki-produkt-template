@@ -84,3 +84,11 @@ test('kein Git-Repo', async () => {
   assert.equal(b.length, 1);
   assert.equal(b[0].stufe, 'HINWEIS');
 });
+
+test('unbekannte Basis ist ein Fehler und schaltet die lokale Prüfung nicht ab', async () => {
+  const root = repoMitQuelle();
+  writeFileSync(join(root, QUELLE), 'Verändert\n');
+  const b = await r7(root, { basis: 'gibtsnicht' });
+  assert.ok(b.some((x) => x.stufe === 'FEHLER' && /Basis/.test(x.grund)));
+  assert.ok(b.some((x) => x.stufe === 'FEHLER' && x.datei === QUELLE));
+});

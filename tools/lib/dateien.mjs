@@ -1,4 +1,4 @@
-import { readdirSync, existsSync } from 'node:fs';
+import { readdirSync, existsSync, statSync } from 'node:fs';
 import { join, posix, relative, sep } from 'node:path';
 
 /** Projektrelativer Pfad mit `/` als Trenner. */
@@ -43,7 +43,21 @@ export function loeseRelativ(vonDatei, ziel) {
 export function existiertRelativ(root, vonDatei, ziel) {
   const aufgeloest = loeseRelativ(vonDatei, ziel);
   if (aufgeloest === '..' || aufgeloest.startsWith('../')) return false;
-  return existsSync(join(root, aufgeloest));
+  return existiertExakt(root, aufgeloest);
+}
+
+/**
+ * Prüft einen projektrelativen Pfad mit exakter Groß- und Kleinschreibung,
+ * damit Windows und macOS dasselbe Ergebnis liefern wie Linux.
+ */
+export function existiertExakt(root, pfad) {
+  let ordner = root;
+  for (const teil of pfad.split('/').filter((t) => t && t !== '.')) {
+    if (!existsSync(ordner) || !statSync(ordner).isDirectory()) return false;
+    if (!readdirSync(ordner).includes(teil)) return false;
+    ordner = join(ordner, teil);
+  }
+  return true;
 }
 
 /**

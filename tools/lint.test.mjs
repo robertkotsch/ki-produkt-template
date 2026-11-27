@@ -235,3 +235,27 @@ test('H2 nicht bei Einstiegsstufe des Durchlaufs', async () => {
   });
   assert.deepEqual(nur(await lint(root), 'H2-vorstufe'), []);
 });
+
+// ---------- Befunde aus dem abschließenden Review ----------
+
+test('R2 bestätigt_von in leeren Anführungszeichen gilt als fehlend', async () => {
+  const root = erzeugeProjekt(mitIndex({
+    'wiki/a.md': seite({ status: 'bestätigt', 'bestätigt_von': '"  "', 'bestätigt_am': '27.11.2026' }),
+  }));
+  assert.equal(nur(await lint(root), 'R2-pflichtfelder').length, 1);
+});
+
+test('R4 archivierte Stufendateien lösen Links vom ursprünglichen Ort auf', async () => {
+  const root = erzeugeProjekt({
+    'LEITFADEN.md': '# L\n',
+    'wiki/index.md': '[d](datenregeln.md)\n',
+    'wiki/datenregeln.md': seite({ status: 'offen' }),
+    'stufen/archiv/durchlauf-1/3-daten/uebergabe.md': '[l](../../LEITFADEN.md) [d](../../wiki/datenregeln.md)\n',
+  });
+  assert.deepEqual(nur(await lint(root), 'R4-link'), []);
+});
+
+test('R4 prüft Groß- und Kleinschreibung wie unter Linux', async () => {
+  const root = erzeugeProjekt({ 'wiki/index.md': '[a](A.md)\n', 'wiki/a.md': seite({ status: 'offen' }) });
+  assert.equal(nur(await lint(root), 'R4-link').length, 1);
+});

@@ -18,6 +18,16 @@ function istRepoWurzel(root) {
   }
 }
 
+/** Prüft, ob sich eine Basis zu einem Commit auflösen lässt. */
+export function basisGueltig(root, basis) {
+  try {
+    git(root, ['rev-parse', '--verify', '--quiet', `${basis}^{commit}`]);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function leseNameStatus(ausgabe) {
   const ergebnis = [];
   for (const zeile of ausgabe.split('\n')) {
@@ -34,9 +44,10 @@ function leseNameStatus(ausgabe) {
 /**
  * Veränderte, gelöschte oder umbenannte Quelldateien.
  * Ohne Basis: Index und Arbeitsverzeichnis gegenüber HEAD. Mit Basis zusätzlich Basis..HEAD.
+ * Die Basis muss vorher mit basisGueltig geprüft sein.
  * @param {string} root
  * @param {string|null} basis
- * @returns {Array<{art: 'M'|'D'|'R', datei: string}> | null} null, wenn kein Git-Repository
+ * @returns {Array<{art: 'M'|'D'|'R', datei: string}> | null} null, wenn kein Git-Repository mit Commit
  */
 export function geaenderteQuellen(root, basis) {
   if (!istRepoWurzel(root)) return null;
@@ -44,26 +55,33 @@ export function geaenderteQuellen(root, basis) {
   let treffer;
   try {
     treffer = leseNameStatus(git(root, [...optionen, 'HEAD', '--', 'quellen/']));
-    if (basis) treffer.push(...leseNameStatus(git(root, [...optionen, basis, 'HEAD', '--', 'quellen/'])));
   } catch {
     return null;
   }
+  if (basis) treffer.push(...leseNameStatus(git(root, [...optionen, basis, 'HEAD', '--', 'quellen/'])));
   const gesehen = new Set();
   return treffer.filter((t) => !gesehen.has(t.datei) && gesehen.add(t.datei));
 }
 
 /** R7: Quellen bleiben unverändert, außer die Korrektur ist in quellen/KORREKTUREN.md verzeichnet. */
 export function pruefeR7(root, basis) {
+  const befunde = [];
+  if (basis && istRepoWurzel(root) && !basisGueltig(root, basis)) {
+    befunde.push(fehler('R7-quellen', 'quellen/', `Basis „${basis}“ nicht gefunden, Vergleich mit der Basis nicht möglich`));
+    basis = null;
+  }
   const treffer = geaenderteQuellen(root, basis);
   if (treffer === null) {
-    return [hinweis('R7-quellen', 'quellen/', 'Quellenschutz nicht geprüft, kein Git-Repository')];
+    befunde.push(hinweis('R7-quellen', 'quellen/', 'Quellenschutz nicht geprüft, kein Git-Repository mit Commit oder Git nicht verfügbar'));
+    return befunde;
   }
   const korrekturPfad = join(root, 'quellen/KORREKTUREN.md');
   const korrekturen = existsSync(korrekturPfad) ? readFileSync(korrekturPfad, 'utf8') : '';
-  return treffer.map(({ art, datei }) => {
+  for (const { art, datei } of treffer) {
     const was = art === 'D' ? 'gelöscht' : 'verändert';
-    return korrekturen.includes(datei)
+    befunde.push(korrekturen.includes(datei)
       ? hinweis('R7-quellen', datei, `Quelle ${was}, Korrektur ist in quellen/KORREKTUREN.md verzeichnet`)
-      : fehler('R7-quellen', datei, `Quelle ${was}, Quellen sind unveränderlich (Korrektur in quellen/KORREKTUREN.md eintragen)`);
-  });
+      : fehler('R7-quellen', datei, `Quelle ${was}, Quellen sind unveränderlich (Korrektur in quellen/KORREKTUREN.md eintragen)`));
+  }
+  return befunde;
 }

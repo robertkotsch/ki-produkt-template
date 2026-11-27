@@ -76,8 +76,10 @@ export function linkDateien(root) {
 export function pruefeR4(root) {
   const befunde = [];
   for (const datei of linkDateien(root)) {
+    // Archivierte Stufendateien bleiben unverändert und werden vom ursprünglichen Ort aus aufgelöst.
+    const ort = datei.replace(/^stufen\/archiv\/[^/]+\//, 'stufen/');
     for (const ziel of relativeLinks(readFileSync(join(root, datei), 'utf8'))) {
-      if (!existiertRelativ(root, datei, ziel)) {
+      if (!existiertRelativ(root, ort, ziel)) {
         befunde.push(fehler('R4-link', datei, `Link ins Leere „${ziel}“`));
       }
     }

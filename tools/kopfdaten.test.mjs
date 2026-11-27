@@ -39,3 +39,12 @@ test('entfernt Kommentare', () => {
 test('ohne Kopfdaten', () => {
   assert.equal(parseKopfdaten('# Titel'), null);
 });
+
+test('entfernt Anführungszeichen um Werte und Listeneinträge', () => {
+  const r = parseKopfdaten(`---\nstatus: "vorgeschlagen"\nbestätigt_am: '27.11.2026'\nleer: ""\nblank: "  "\nquellen: ["../quellen/a.md", '../quellen/b.md']\n---\n`);
+  assert.equal(r.daten.status, 'vorgeschlagen');
+  assert.equal(r.daten['bestätigt_am'], '27.11.2026');
+  assert.equal(r.daten.leer, '');
+  assert.equal(r.daten.blank, '');
+  assert.deepEqual(r.daten.quellen, ['../quellen/a.md', '../quellen/b.md']);
+});
