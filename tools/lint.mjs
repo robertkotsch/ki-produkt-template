@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseKopfdaten } from './lib/kopfdaten.mjs';
 import { wikiSeiten } from './lib/dateien.mjs';
-import { pruefeR1 } from './lib/regeln.mjs';
+import { pruefeR1, pruefeR2, pruefeR3 } from './lib/regeln.mjs';
 
 /**
  * Prüft ein Projekt und liefert alle Befunde.
@@ -18,7 +18,7 @@ export async function lint(root, optionen = {}) {
     seiten.set(pfad, parseKopfdaten(readFileSync(join(root, pfad), 'utf8')));
   }
   const kontext = { seiten };
-  return [...pruefeR1(root, kontext)];
+  return [...pruefeR1(root, kontext), ...pruefeR2(root, kontext), ...pruefeR3(root, kontext)];
 }
 
 function leseArgumente(argv) {

@@ -38,3 +38,76 @@ test('Pfade mit Schrägstrich', async () => {
   assert.equal(b[0].datei, 'wiki/entscheidungen/001-x.md');
   assert.ok(!b[0].datei.includes('\\'));
 });
+
+// ---------- R2 und R3 ----------
+
+const mitIndex = (seiten) => ({
+  'wiki/index.md': Object.keys(seiten).map((p) => `[x](${p.replace('wiki/', '')})`).join('\n'),
+  ...seiten,
+});
+
+test('R2 bestätigt ohne bestätigt_von', async () => {
+  const root = erzeugeProjekt(mitIndex({ 'wiki/a.md': seite({ status: 'bestätigt', 'bestätigt_am': '27.11.2026' }) }));
+  assert.equal(nur(await lint(root), 'R2-pflichtfelder').length, 1);
+});
+
+test('R2 bestätigt_von nur Leerzeichen gilt als fehlend', async () => {
+  const root = erzeugeProjekt(mitIndex({
+    'wiki/a.md': seite({ status: 'bestätigt', 'bestätigt_von': '  ', 'bestätigt_am': '27.11.2026' }),
+  }));
+  assert.equal(nur(await lint(root), 'R2-pflichtfelder').length, 1);
+});
+
+test('R2 bestätigt vollständig', async () => {
+  const root = erzeugeProjekt(mitIndex({
+    'wiki/a.md': seite({ status: 'bestätigt', 'bestätigt_von': 'Erika Muster · Fachbereich', 'bestätigt_am': '27.11.2026' }),
+  }));
+  assert.deepEqual(nur(await lint(root), 'R2-pflichtfelder'), []);
+});
+
+test('R2 bestätigt_am falsches Format', async () => {
+  const root = erzeugeProjekt(mitIndex({
+    'wiki/a.md': seite({ status: 'bestätigt', 'bestätigt_von': 'Erika Muster', 'bestätigt_am': '2026-11-27' }),
+  }));
+  assert.equal(nur(await lint(root), 'R2-pflichtfelder').length, 1);
+});
+
+test('R2 geprüft ohne geprüft_am_stand und nachweis', async () => {
+  const root = erzeugeProjekt(mitIndex({
+    'wiki/a.md': seite({ status: 'geprüft', 'bestätigt_von': 'Erika Muster', 'bestätigt_am': '27.11.2026' }),
+  }));
+  assert.equal(nur(await lint(root), 'R2-pflichtfelder').length, 2);
+});
+
+test('R3 nachweis zeigt ins Leere', async () => {
+  const root = erzeugeProjekt(mitIndex({
+    'wiki/a.md': seite({
+      status: 'geprüft', 'bestätigt_von': 'E', 'bestätigt_am': '27.11.2026',
+      'geprüft_am_stand': 'abc123', nachweis: '../nachweise/fehlt.md',
+    }),
+  }));
+  assert.equal(nur(await lint(root), 'R3-verweis').length, 1);
+});
+
+test('R3 vorhandener nachweis', async () => {
+  const root = erzeugeProjekt({
+    ...mitIndex({
+      'wiki/a.md': seite({
+        status: 'geprüft', 'bestätigt_von': 'E', 'bestätigt_am': '27.11.2026',
+        'geprüft_am_stand': 'abc123', nachweis: '../nachweise/2026-11-27-test.md',
+      }),
+    }),
+    'nachweise/2026-11-27-test.md': '# Test\n',
+  });
+  assert.deepEqual(nur(await lint(root), 'R3-verweis'), []);
+});
+
+test('R3 quellen-Eintrag fehlt', async () => {
+  const root = erzeugeProjekt({
+    ...mitIndex({ 'wiki/a.md': seite({ status: 'vorgeschlagen', quellen: '[../quellen/da.md, ../quellen/fehlt.md]' }) }),
+    'quellen/da.md': '# da\n',
+  });
+  const b = nur(await lint(root), 'R3-verweis');
+  assert.equal(b.length, 1);
+  assert.match(b[0].grund, /fehlt\.md/);
+});
