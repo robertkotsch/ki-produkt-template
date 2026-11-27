@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseKopfdaten } from './lib/kopfdaten.mjs';
+import { pruefeR7 } from './lib/quellenschutz.mjs';
 import { wikiSeiten } from './lib/dateien.mjs';
 import { pruefeR1, pruefeR2, pruefeR3, pruefeR4, pruefeR5, pruefeR6, pruefeH1, pruefeH2, stufenDateien } from './lib/regeln.mjs';
 
@@ -19,7 +20,8 @@ export async function lint(root, optionen = {}) {
   }
   const kontext = { seiten, stufen: stufenDateien(root) };
   return [...pruefeR1(root, kontext), ...pruefeR2(root, kontext), ...pruefeR3(root, kontext), ...pruefeR4(root), ...pruefeR5(root, kontext),
-    ...pruefeR6(root, kontext), ...pruefeH1(root, kontext), ...pruefeH2(root, kontext)];
+    ...pruefeR6(root, kontext), ...pruefeH1(root, kontext), ...pruefeH2(root, kontext),
+    ...pruefeR7(root, optionen.basis ?? null)];
 }
 
 function leseArgumente(argv) {
