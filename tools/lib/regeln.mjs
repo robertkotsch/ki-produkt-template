@@ -111,6 +111,7 @@ export function pruefeR5(root, kontext) {
 }
 
 export const UEBERGABE_STATUS = ['offen', 'vorbereitet', 'abgeschlossen'];
+export const EINGANG_STATUS = ['offen', 'begonnen'];
 const STUFENORDNER = /^stufen\/(\d)-[^/]+\/(eingang|uebergabe)\.md$/;
 
 /** Stufendateien des laufenden Durchlaufs (ohne Archiv): Map „n“ → { eingang?, uebergabe? } mit Pfad und Kopfdaten. */
@@ -129,7 +130,10 @@ export function stufenDateien(root) {
 /** R6: Abgeschlossene Übergaben sind unterschrieben und stützen sich nur auf bestätigte oder geprüfte Seiten. */
 export function pruefeR6(root, kontext) {
   const befunde = [];
-  for (const { uebergabe } of kontext.stufen.values()) {
+  for (const { eingang, uebergabe } of kontext.stufen.values()) {
+    if (eingang && !EINGANG_STATUS.includes(eingang.kopf?.daten.status)) {
+      befunde.push(fehler('R6-uebergabe', eingang.pfad, `unbekannter Eingangsstatus „${eingang.kopf?.daten.status ?? ''}“`));
+    }
     if (!uebergabe) continue;
     const { pfad, kopf } = uebergabe;
     const status = kopf?.daten.status;

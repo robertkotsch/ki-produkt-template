@@ -4,9 +4,10 @@
   "type": "module",
   "scripts": {
     "lint": "node tools/lint.mjs",
-    "test": "node --test"
+    "test": "node --test \"tools/**/*.test.mjs\"",
+    "test:template": "node tools/template-pruefung.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   }
 }

@@ -259,3 +259,8 @@ test('R4 prüft Groß- und Kleinschreibung wie unter Linux', async () => {
   const root = erzeugeProjekt({ 'wiki/index.md': '[a](A.md)\n', 'wiki/a.md': seite({ status: 'offen' }) });
   assert.equal(nur(await lint(root), 'R4-link').length, 1);
 });
+
+test('R6 unbekannter Eingangsstatus', async () => {
+  const root = erzeugeProjekt({ 'wiki/index.md': '', 'stufen/1-ziel/eingang.md': seite({ status: 'begonen' }) });
+  assert.equal(nur(await lint(root), 'R6-uebergabe').length, 1);
+});

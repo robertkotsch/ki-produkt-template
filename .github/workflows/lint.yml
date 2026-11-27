@@ -8,24 +8,38 @@ jobs:
   pruefen:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
       - name: Tests
-        run: node --test
+        env:
+          # Die Template-Tests laufen nur im Template selbst, nicht in daraus erzeugten Projekten.
+          TEMPLATE_PRUEFUNG: ${{ github.repository == 'robertkotsch/ki-produkt-template' && '1' || '0' }}
+        run: node --test "tools/**/*.test.mjs"
       - name: Lint
         env:
           EREIGNIS: ${{ github.event_name }}
           BASIS_PR: ${{ github.base_ref }}
           BASIS_PUSH: ${{ github.event.before }}
+          STANDARDZWEIG: ${{ github.event.repository.default_branch }}
         run: |
+          NULL=0000000000000000000000000000000000000000
           if [ "$EREIGNIS" = "pull_request" ]; then
-            node tools/lint.mjs --basis "origin/$BASIS_PR"
-          elif [ -n "$BASIS_PUSH" ] && [ "$BASIS_PUSH" != "0000000000000000000000000000000000000000" ]; then
-            node tools/lint.mjs --basis "$BASIS_PUSH"
+            BASIS="origin/$BASIS_PR"
+          elif [ -n "$BASIS_PUSH" ] && [ "$BASIS_PUSH" != "$NULL" ]; then
+            BASIS="$BASIS_PUSH"
+          else
+            # Neuer Zweig: mit dem Abzweigpunkt vom Standardzweig vergleichen, sonst mit dem Vorgänger.
+            BASIS=$(git merge-base "origin/$STANDARDZWEIG" HEAD 2>/dev/null || true)
+            if [ -z "$BASIS" ] || [ "$BASIS" = "$(git rev-parse HEAD)" ]; then
+              BASIS=$(git rev-parse --verify --quiet HEAD~1 || true)
+            fi
+          fi
+          if [ -n "$BASIS" ]; then
+            node tools/lint.mjs --basis "$BASIS"
           else
             node tools/lint.mjs
           fi

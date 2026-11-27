@@ -20,7 +20,9 @@ Das Wiki ist der einzige Ort für den aktuellen Wissensstand. Ein Sachverhalt st
 
 Hinzu kommen [stufen/](stufen/DURCHLAUF.md) mit je einem Eingang und einer Übergabe pro Stufe sowie [nachweise/](nachweise/README.md) für Prüfprotokolle und [wiki/entscheidungen/](wiki/entscheidungen/README.md) für folgenreiche Entscheidungen.
 
-**Gesprächsbeiträge sind Quellen.** Die Produktidee und jede Antwort eines Menschen im Dialog, etwa im Interview der Stufe 1 oder bei der Beobachtung der Stufe 2, hältst du als neue Quelldatei fest. Diese Datei erteilt dir dafür die Anweisung. Zeige vor dem Ablegen deine Zusammenfassung und lass sie bestätigen. Die Form steht in [quellen/README.md](quellen/README.md).
+**Gesprächsbeiträge sind Quellen.** Die Produktidee und jede Antwort eines Menschen im Dialog, etwa im Interview der Stufe 1 oder bei der Beobachtung der Stufe 2, hältst du als neue Quelldatei fest. Diese Datei erteilt dir dafür die Anweisung. Die Produktidee legst du im Wortlaut ab, ohne weitere Bestätigung. Fasst du dagegen ein Gespräch zusammen, zeigst du die Zusammenfassung vor dem Ablegen und lässt sie bestätigen. Ist niemand erreichbar, legst du nichts ab, sondern hältst die offene Bestätigung in [offene Punkte](wiki/offene-punkte.md) fest. Die Form steht in [quellen/README.md](quellen/README.md).
+
+**Nur Wirkliches ist eine Quelle.** Eigene Annahmen, Beispiele und simulierte Antworten legst du nie als Quelle ab, denn Quellen sind unveränderlich und würden später als echte Grundlage gelesen. Solche Inhalte gehören als gekennzeichnete Annahme auf die passende Wiki-Seite.
 
 **Vertrauliches bleibt draußen.** Vertrauliche Originaldaten und Zugangsdaten gehören weder in Quellen noch ins Wiki. Übertrage keine Projektinhalte an Dienste außerhalb des Repositorys, solange die Datenregeln der Stufe 3 das nicht ausdrücklich erlauben.
 
@@ -43,11 +45,13 @@ Daraus folgt für dich:
 - Jede Aussage, die weder aus einer Quelle noch aus einer bestätigten Seite folgt, kennzeichnest du im Text als Annahme.
 - Trage jede genutzte Quelle in das Feld `quellen` der Seite ein.
 
-Für Eingang und Übergabe einer Stufe gilt dasselbe: Den Eingang setzt du auf `begonnen`, die Übergabe höchstens auf `vorbereitet`. Auf `abgeschlossen` setzt sie die bestätigende Person.
+Für Eingang und Übergabe einer Stufe gilt dasselbe. Der Eingang kennt die Status `offen` und `begonnen`, die Übergabe `offen`, `vorbereitet` und `abgeschlossen`. Den Eingang setzt du auf `begonnen`, die Übergabe höchstens auf `vorbereitet`. `vorbereitet` heißt: Jede Übergabebedingung hat einen Beleg oder eine kurze Begründung, warum sie noch offen ist. Auf `abgeschlossen` setzt sie die bestätigende Person.
 
 ## 4. Vorgänge
 
 **Stufe beginnen.** Führe `node tools/lint.mjs` aus. Führe dann den Einstiegsauftrag aus dem Leitfaden aus und halte das Ergebnis in der Datei `eingang.md` der Stufe fest, mit Verweisen auf die Wiki-Seiten. Setze ihren Status auf `begonnen`. Führe danach den Arbeitsauftrag der Stufe aus dem Leitfaden aus.
+
+In Stufe 1 des ersten Durchlaufs gibt es noch keine Übergabe. Lege dann zuerst die Produktidee als Quelle ab. Die Gegenprobe stützt sich auf diese Quelle, und Felder ohne Grundlage vermerkst du als „noch keine“.
 
 **Quelle aufnehmen.** Lies die neue Quelle. Aktualisiere die betroffenen Wiki-Seiten oder lege neue an. Widerspricht die Quelle einer bestätigten Seite, lege den Widerspruch als Änderungsvorschlag ab. Schreibe [wiki/index.md](wiki/index.md) und [wiki/log.md](wiki/log.md) fort.
 
@@ -61,12 +65,16 @@ Für Eingang und Übergabe einer Stufe gilt dasselbe: Den Eingang setzt du auf `
 
 ## 5. Log
 
-Jeder Vorgang erhält am Ende von [wiki/log.md](wiki/log.md) einen Eintrag mit einer Überschrift nach dem Muster `## [TT.MM.JJJJ] <vorgang> · <kurztitel>`. Darunter stehen die berührten Seiten und die offenen Punkte.
+Jeder Vorgang erhält am Ende von [wiki/log.md](wiki/log.md) einen Eintrag mit einer Überschrift nach dem Muster `## [TT.MM.JJJJ] <vorgang> · <kurztitel>`. Darunter stehen die berührten Seiten und die offenen Punkte. Das Log wird nur fortgeschrieben. Dein erster Eintrag hält die Anlage des Projekts mit Datum fest.
 
-## 6. Nachweise
+## 6. Entscheidungen
 
-Jede ausgeführte Prüfung hältst du als Datei unter [nachweise/](nachweise/README.md) fest, mit Version, Voraussetzungen, Eingabe, Befehl oder Bedienfolge sowie erwartetem und beobachtetem Ergebnis. Bei Modelltests gehören Modellkennung, Einstellungen, Prompt- und Datenstand sowie das Bewertungsverfahren dazu.
+Eine eigene Datei unter [wiki/entscheidungen/](wiki/entscheidungen/README.md) erhält eine Entscheidung, wenn sie zwischen echten Alternativen wählt und eine spätere Änderung erneut geprüft werden müsste, etwa die Wahl zwischen einer Lösung mit und ohne Modell. Das Ergebnis selbst steht weiter auf der fachlichen Wiki-Seite, die Entscheidungsdatei hält Alternativen, Begründung und Auslöser fest und verweist auf diese Seite.
 
-## 7. Sicherheit begleitet alle Stufen
+## 7. Nachweise
+
+Jede Prüfung des Produkts, etwa ein Test, eine Evaluation oder ein Pilotdurchlauf, hältst du als Datei unter [nachweise/](nachweise/README.md) fest. Lint-Läufe sind keine Nachweise, sie stehen nur im Eingang und im Log. Ein Nachweis enthält Version, Voraussetzungen, Eingabe, Befehl oder Bedienfolge sowie erwartetem und beobachtetem Ergebnis. Bei Modelltests gehören Modellkennung, Einstellungen, Prompt- und Datenstand sowie das Bewertungsverfahren dazu.
+
+## 8. Sicherheit begleitet alle Stufen
 
 Datenschutz, Sicherheit und Governance sind in jeder Stufe Teil deiner Arbeit, nicht erst in Stufe 5. Der Leitfaden beschreibt im Abschnitt [Sicherheit begleitet alle Stufen](LEITFADEN.md#sicherheit-begleitet-alle-stufen), was jede Stufe dazu beiträgt.

@@ -6,7 +6,7 @@ Grundlage ist der [Leitfaden](LEITFADEN.md) „KI-Produkte in acht Stufen entwic
 
 ## Schnellstart
 
-1. Auf GitHub „Use this template“ wählen und ein neues Repository anlegen.
+1. Auf GitHub „Use this template“ wählen und ein neues Repository anlegen. Die Lizenzdateien an die Bedingungen des eigenen Projekts anpassen, siehe [LICENSE-TEXT.md](LICENSE-TEXT.md).
 2. Das Repository klonen und den Agenten darin starten. Claude Code liest die Regeln über `CLAUDE.md`, Codex direkt aus `AGENTS.md`.
 3. Dem Agenten sagen: „Beginne Stufe 1 für folgende Produktidee: …“
 
@@ -37,7 +37,9 @@ npm run lint
 npm test
 ```
 
-Der Lint prüft ohne Abhängigkeiten, ob Wiki-Seiten gültige Kopfdaten und Pflichtfelder haben, ob Verweise und Links ihr Ziel finden, ob der Index vollständig ist, ob abgeschlossene Übergaben nur auf bestätigten Seiten beruhen und ob Quellen unverändert geblieben sind. Er läuft auch bei jedem Push in GitHub Actions. Voraussetzung ist Node.js ab Version 20.
+`npm test` führt nur die Tests des Prüfwerkzeugs unter `tools/` aus, nicht die Tests des eigenen Produktcodes. Im Template selbst prüft `npm run test:template` zusätzlich Gerüst, Stilregeln und Links.
+
+Der Lint prüft ohne Abhängigkeiten, ob Wiki-Seiten gültige Kopfdaten und Pflichtfelder haben, ob Verweise und Links ihr Ziel finden, ob der Index vollständig ist, ob abgeschlossene Übergaben nur auf bestätigten Seiten beruhen und ob Quellen unverändert geblieben sind. Er läuft auch bei jedem Push in GitHub Actions. Voraussetzung ist Node.js ab Version 22.
 
 ## Beispiel
 

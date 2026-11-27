@@ -8,6 +8,11 @@ import { listeMarkdown } from './lib/dateien.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
+// Diese Tests prüfen das Template selbst. In einem aus dem Template erzeugten Projekt
+// laufen sie nicht, denn dort ändern sich Stufendateien und Texte bestimmungsgemäß.
+// Die Action des Templates setzt TEMPLATE_PRUEFUNG=1, lokal: npm run test:template
+const nurImTemplate = { skip: process.env.TEMPLATE_PRUEFUNG !== '1' && 'nur im Template (TEMPLATE_PRUEFUNG=1)' };
+
 const STUFEN = [
   '1-ziel-nutzen-verantwortung',
   '2-prozess-nutzer-organisation',
@@ -38,12 +43,12 @@ const ohneCode = (md) => md
   .replace(/^(```|~~~)[^\n]*\n[\s\S]*?^\1[^\n]*$/gm, '')
   .replace(/`[^`\n]*`/g, '');
 
-test('frisches Template besteht den Lint', async () => {
+test('frisches Template besteht den Lint', nurImTemplate, async () => {
   const fehler = (await lint(root)).filter((b) => b.stufe === 'FEHLER');
   assert.deepEqual(fehler, []);
 });
 
-test('acht Stufenordner mit eingang und uebergabe', () => {
+test('acht Stufenordner mit eingang und uebergabe', nurImTemplate, () => {
   for (const s of STUFEN) {
     assert.ok(existsSync(join(root, 'stufen', s, 'eingang.md')), `${s}/eingang.md`);
     assert.ok(existsSync(join(root, 'stufen', s, 'uebergabe.md')), `${s}/uebergabe.md`);
@@ -51,7 +56,7 @@ test('acht Stufenordner mit eingang und uebergabe', () => {
   assert.ok(existsSync(join(root, 'stufen/DURCHLAUF.md')));
 });
 
-test('Stufendateien gleichen den Vorlagen', () => {
+test('Stufendateien gleichen den Vorlagen', nurImTemplate, () => {
   const vorlagen = listeMarkdown(root, 'tools/vorlagen/stufen');
   assert.equal(vorlagen.length, 16);
   for (const v of vorlagen) {
@@ -60,7 +65,7 @@ test('Stufendateien gleichen den Vorlagen', () => {
   }
 });
 
-test('Stilregel: kein Semikolon und kein Gedankenstrich', () => {
+test('Stilregel: kein Semikolon und kein Gedankenstrich', nurImTemplate, () => {
   const verstoesse = [];
   for (const datei of alleMarkdown()) {
     const text = ohneCode(readFileSync(join(root, datei), 'utf8'));
@@ -71,17 +76,23 @@ test('Stilregel: kein Semikolon und kein Gedankenstrich', () => {
   assert.deepEqual(verstoesse, []);
 });
 
-test('keine privaten Verweise', () => {
-  const verboten = /profile_de|interview-coach|chemmedia|Bewerbungen/i;
-  const treffer = alleMarkdown().filter((d) => verboten.test(readFileSync(join(root, d), 'utf8')));
+test('keine privaten Begriffe', nurImTemplate, () => {
+  // Die Begriffe stehen in einer nicht versionierten Datei, damit sie nicht selbst veröffentlicht werden.
+  const liste = join(root, '.privat-begriffe');
+  if (!existsSync(liste)) return;
+  const begriffe = readFileSync(liste, 'utf8').split(/\r?\n/).map((z) => z.trim()).filter(Boolean);
+  const treffer = alleMarkdown().filter((d) => {
+    const text = readFileSync(join(root, d), 'utf8').toLowerCase();
+    return begriffe.some((b) => text.includes(b.toLowerCase()));
+  });
   assert.deepEqual(treffer, []);
 });
 
-test('CLAUDE.md bindet nur AGENTS.md ein', () => {
+test('CLAUDE.md bindet nur AGENTS.md ein', nurImTemplate, () => {
   assert.equal(readFileSync(join(root, 'CLAUDE.md'), 'utf8').trim(), '@AGENTS.md');
 });
 
-test('Links in Wurzeldateien sind gültig', async () => {
+test('Links in Wurzeldateien sind gültig', nurImTemplate, async () => {
   const { relativeLinks, existiertRelativ } = await import('./lib/dateien.mjs');
   const tot = [];
   for (const datei of ['README.md', 'AGENTS.md', 'LEITFADEN.md', 'LICENSE-TEXT.md']) {
@@ -93,7 +104,7 @@ test('Links in Wurzeldateien sind gültig', async () => {
   assert.deepEqual(tot, []);
 });
 
-test('Lizenzdateien vorhanden', () => {
+test('Lizenzdateien vorhanden', nurImTemplate, () => {
   assert.match(readFileSync(join(root, 'LICENSE'), 'utf8'), /MIT License/);
   assert.match(readFileSync(join(root, 'LICENSE-TEXT.md'), 'utf8'), /CC BY 4\.0/);
 });

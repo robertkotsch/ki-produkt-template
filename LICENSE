@@ -2,8 +2,10 @@ MIT License
 
 Copyright (c) 2026 Robert Kotsch
 
-This license applies to the code in tools/ and .github/. All other files are
-licensed under CC BY 4.0, see LICENSE-TEXT.md.
+This license applies to the code in tools/ and .github/ as supplied by the
+template, except tools/vorlagen/. The texts supplied by the template are
+licensed under CC BY 4.0, see LICENSE-TEXT.md. Content created later in a
+project generated from this template is not covered by either license.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
