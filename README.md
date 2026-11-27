@@ -43,7 +43,7 @@ Der Lint prüft ohne Abhängigkeiten, ob Wiki-Seiten gültige Kopfdaten und Pfli
 
 ## Beispiel
 
-Ein durchgearbeitetes Beispiel mit lauffähigem Code, ein Assistent für Fragen zu Projektakten, folgt in einem eigenen Repository.
+Ein durchgearbeitetes Beispiel mit lauffähigem Code, ein Assistent für Fragen zu Projektakten eines fiktiven Ingenieurbüros, entsteht in [ki-produkt-beispiel-projektakten](https://github.com/robertkotsch/ki-produkt-beispiel-projektakten).
 
 ## Lizenz und Autor
 
