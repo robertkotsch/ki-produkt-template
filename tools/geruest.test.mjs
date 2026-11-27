@@ -76,3 +76,24 @@ test('keine privaten Verweise', () => {
   const treffer = alleMarkdown().filter((d) => verboten.test(readFileSync(join(root, d), 'utf8')));
   assert.deepEqual(treffer, []);
 });
+
+test('CLAUDE.md bindet nur AGENTS.md ein', () => {
+  assert.equal(readFileSync(join(root, 'CLAUDE.md'), 'utf8').trim(), '@AGENTS.md');
+});
+
+test('Links in Wurzeldateien sind gültig', async () => {
+  const { relativeLinks, existiertRelativ } = await import('./lib/dateien.mjs');
+  const tot = [];
+  for (const datei of ['README.md', 'AGENTS.md', 'LEITFADEN.md', 'LICENSE-TEXT.md']) {
+    assert.ok(existsSync(join(root, datei)), `${datei} fehlt`);
+    for (const ziel of relativeLinks(readFileSync(join(root, datei), 'utf8'))) {
+      if (!existiertRelativ(root, datei, ziel)) tot.push(`${datei} → ${ziel}`);
+    }
+  }
+  assert.deepEqual(tot, []);
+});
+
+test('Lizenzdateien vorhanden', () => {
+  assert.match(readFileSync(join(root, 'LICENSE'), 'utf8'), /MIT License/);
+  assert.match(readFileSync(join(root, 'LICENSE-TEXT.md'), 'utf8'), /CC BY 4\.0/);
+});
