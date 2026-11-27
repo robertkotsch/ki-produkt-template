@@ -1,0 +1,31 @@
+name: Lint und Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pruefen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Tests
+        run: node --test
+      - name: Lint
+        env:
+          EREIGNIS: ${{ github.event_name }}
+          BASIS_PR: ${{ github.base_ref }}
+          BASIS_PUSH: ${{ github.event.before }}
+        run: |
+          if [ "$EREIGNIS" = "pull_request" ]; then
+            node tools/lint.mjs --basis "origin/$BASIS_PR"
+          elif [ -n "$BASIS_PUSH" ] && [ "$BASIS_PUSH" != "0000000000000000000000000000000000000000" ]; then
+            node tools/lint.mjs --basis "$BASIS_PUSH"
+          else
+            node tools/lint.mjs
+          fi
