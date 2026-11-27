@@ -1,0 +1,12 @@
+{
+  "name": "ki-produkt-template",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "node tools/lint.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
