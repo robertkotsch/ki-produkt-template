@@ -111,3 +111,43 @@ test('R3 quellen-Eintrag fehlt', async () => {
   assert.equal(b.length, 1);
   assert.match(b[0].grund, /fehlt\.md/);
 });
+
+// ---------- R4 und R5 ----------
+
+test('R4 toter Link in wiki, stufen, nachweise, README.md und stufen/archiv', async () => {
+  const root = erzeugeProjekt({
+    'README.md': '[x](fehlt.md)\n',
+    'wiki/index.md': '[x](fehlt.md)\n',
+    'stufen/1-ziel/eingang.md': '[x](fehlt.md)\n',
+    'stufen/archiv/durchlauf-1/1-ziel/uebergabe.md': '[x](fehlt.md)\n',
+    'nachweise/a.md': '[x](fehlt.md)\n',
+  });
+  const dateien = nur(await lint(root), 'R4-link').map((b) => b.datei).sort();
+  assert.deepEqual(dateien, [
+    'README.md', 'nachweise/a.md', 'stufen/1-ziel/eingang.md',
+    'stufen/archiv/durchlauf-1/1-ziel/uebergabe.md', 'wiki/index.md',
+  ]);
+});
+
+test('R4 gültiger Link auf Ordner oder Datei', async () => {
+  const root = erzeugeProjekt({
+    'README.md': '[w](wiki/) [i](wiki/index.md) [q](quellen)\n',
+    'wiki/index.md': '# Index\n',
+    'quellen/README.md': '# Quellen\n',
+  });
+  assert.deepEqual(nur(await lint(root), 'R4-link'), []);
+});
+
+test('R5 Seite fehlt im Index', async () => {
+  const root = erzeugeProjekt({ 'wiki/index.md': '# Index\n', 'wiki/a.md': seite({ status: 'offen' }) });
+  const b = nur(await lint(root), 'R5-index');
+  assert.equal(b.length, 1);
+  assert.equal(b[0].datei, 'wiki/a.md');
+});
+
+test('R5 Index nennt fehlende Seite', async () => {
+  const root = erzeugeProjekt({ 'wiki/index.md': '[a](a.md)\n' });
+  const b = nur(await lint(root), 'R5-index');
+  assert.equal(b.length, 1);
+  assert.equal(b[0].datei, 'wiki/index.md');
+});

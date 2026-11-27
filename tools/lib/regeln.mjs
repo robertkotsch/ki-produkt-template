@@ -1,17 +1,6 @@
-import { existsSync } from 'node:fs';
-import { join, posix } from 'node:path';
-
-/** Löst einen Verweis relativ zu einer projektrelativen Datei auf. */
-export function loeseRelativ(vonDatei, ziel) {
-  return posix.normalize(posix.join(posix.dirname(vonDatei), ziel));
-}
-
-/** Prüft, ob ein relativer Verweis auf eine vorhandene Datei oder einen Ordner zeigt. */
-export function existiertRelativ(root, vonDatei, ziel) {
-  const aufgeloest = loeseRelativ(vonDatei, ziel);
-  if (aufgeloest.startsWith('..')) return false;
-  return existsSync(join(root, aufgeloest));
-}
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { existiertRelativ, relativeLinks, listeMarkdown, loeseRelativ } from './dateien.mjs';
 
 /** @typedef {{ stufe: 'FEHLER'|'HINWEIS', regel: string, datei: string, grund: string }} Befund */
 
@@ -70,6 +59,49 @@ export function pruefeR3(root, kontext) {
       if (!existiertRelativ(root, pfad, ziel)) {
         befunde.push(fehler('R3-verweis', pfad, `Verweis auf nicht vorhandene Datei „${ziel}“`));
       }
+    }
+  }
+  return befunde;
+}
+
+/** Dateien, deren relative Links R4 prüft. */
+export function linkDateien(root) {
+  const dateien = [...listeMarkdown(root, 'wiki'), ...listeMarkdown(root, 'stufen'), ...listeMarkdown(root, 'nachweise')];
+  if (existsSync(join(root, 'README.md'))) dateien.push('README.md');
+  return dateien;
+}
+
+/** R4: Relative Links zeigen auf vorhandene Dateien oder Ordner. */
+export function pruefeR4(root) {
+  const befunde = [];
+  for (const datei of linkDateien(root)) {
+    for (const ziel of relativeLinks(readFileSync(join(root, datei), 'utf8'))) {
+      if (!existiertRelativ(root, datei, ziel)) {
+        befunde.push(fehler('R4-link', datei, `Link ins Leere „${ziel}“`));
+      }
+    }
+  }
+  return befunde;
+}
+
+/** R5: index.md nennt genau die vorhandenen Wiki-Seiten. */
+export function pruefeR5(root, kontext) {
+  const indexPfad = 'wiki/index.md';
+  if (!existsSync(join(root, indexPfad))) {
+    return [fehler('R5-index', indexPfad, 'wiki/index.md fehlt')];
+  }
+  const verlinkt = new Set(
+    relativeLinks(readFileSync(join(root, indexPfad), 'utf8'))
+      .map((ziel) => loeseRelativ(indexPfad, ziel))
+      .filter((p) => p.startsWith('wiki/') && p.endsWith('.md')),
+  );
+  const befunde = [];
+  for (const pfad of kontext.seiten.keys()) {
+    if (!verlinkt.has(pfad)) befunde.push(fehler('R5-index', pfad, 'fehlt in wiki/index.md'));
+  }
+  for (const ziel of verlinkt) {
+    if (!kontext.seiten.has(ziel) && !existsSync(join(root, ziel))) {
+      befunde.push(fehler('R5-index', indexPfad, `nennt nicht vorhandene Seite „${ziel}“`));
     }
   }
   return befunde;
